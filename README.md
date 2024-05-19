@@ -1,0 +1,2 @@
+# kaliscripts
+automate kali hacking

@@ -1,4 +1,4 @@
-Here is a catchy and eye-appealing README for your script, complete with ASCII art:
+
 
 ```markdown
 # Ultimate Ethical Hacking Tool

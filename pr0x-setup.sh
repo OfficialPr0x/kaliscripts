@@ -30,9 +30,9 @@ display_menu() {
       Ultimate Ethical Hacking Tool         
 ============================================
 EOF
-  echo
-  echo "Choose an option from the menu:"
-  echo
+  echo "============================================"
+  echo "     Choose an option from the menu:"
+  echo "============================================"
   echo "               +--------------------------------------+"
   echo "               | 1. Update and upgrade system         |"
   echo "               +--------------------------------------+"
@@ -89,68 +89,79 @@ log_and_exec() {
   eval "$2" | tee -a $LOG_FILE
 }
 
+# Function to show progress indicator
+show_progress() {
+  while kill -0 $! 2> /dev/null; do
+    for s in / - \\ \|; do
+      printf "\r[%c] Working..." "$s"
+      sleep 0.1
+    done
+  done
+  printf "\r"
+}
+
 # Function to update and upgrade the system
 update_system() {
-  log_and_exec "Updating and upgrading the system..." "apt update && apt upgrade -y"
+  log_and_exec "Updating and upgrading the system..." "apt update && apt upgrade -y & show_progress"
 }
 
 # Function to install all requirements for Pr0x
 install_requirements_pr0x() {
-  log_and_exec "Installing general tools..." "apt install -y git curl wget vim"
-  log_and_exec "Installing recon tools..." "apt install -y nmap masscan recon-ng amass sublist3r dnsenum whois whatweb dirsearch theharvester assetfinder"
-  log_and_exec "Installing theHarvester from GitHub..." "git clone https://github.com/laramies/theHarvester.git /opt/theHarvester && cd /opt/theHarvester && python3 -m pip install -r requirements/base.txt"
-  log_and_exec "Installing enumeration tools..." "apt install -y enum4linux smbclient nbtscan"
-  log_and_exec "Installing exploitation tools..." "apt install -y metasploit-framework sqlmap"
-  log_and_exec "Installing post-exploitation tools..." "apt install -y bloodhound mimikatz"
-  log_and_exec "Installing defense tools..." "apt install -y ufw fail2ban"
-  log_and_exec "Installing analytics tools..." "wget -O splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz 'https://download.splunk.com/products/splunk/releases/8.2.2/linux/splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz' && tar -xvf splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz -C /opt && /opt/splunk/bin/splunk start --accept-license && /opt/splunk/bin/splunk enable boot-start"
-  log_and_exec "Installing network analysis tools..." "apt install -y wireshark tcpdump"
+  log_and_exec "Installing general tools..." "apt install -y git curl wget vim & show_progress"
+  log_and_exec "Installing recon tools..." "apt install -y nmap masscan recon-ng amass sublist3r dnsenum whois whatweb dirsearch theharvester assetfinder & show_progress"
+  log_and_exec "Installing theHarvester from GitHub..." "git clone https://github.com/laramies/theHarvester.git /opt/theHarvester && cd /opt/theHarvester && python3 -m pip install -r requirements/base.txt & show_progress"
+  log_and_exec "Installing enumeration tools..." "apt install -y enum4linux smbclient nbtscan & show_progress"
+  log_and_exec "Installing exploitation tools..." "apt install -y metasploit-framework sqlmap & show_progress"
+  log_and_exec "Installing post-exploitation tools..." "apt install -y bloodhound mimikatz & show_progress"
+  log_and_exec "Installing defense tools..." "apt install -y ufw fail2ban & show_progress"
+  log_and_exec "Installing analytics tools..." "wget -O splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz 'https://download.splunk.com/products/splunk/releases/8.2.2/linux/splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz' && tar -xvf splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz -C /opt && /opt/splunk/bin/splunk start --accept-license && /opt/splunk/bin/splunk enable boot-start & show_progress"
+  log_and_exec "Installing network analysis tools..." "apt install -y wireshark tcpdump & show_progress"
 }
 
 # Function to install recon tools
 install_recon_tools() {
-  log_and_exec "Installing recon tools..." "apt install -y nmap masscan recon-ng amass sublist3r dnsenum whois whatweb dirsearch theharvester assetfinder"
-  log_and_exec "Installing theHarvester from GitHub..." "git clone https://github.com/laramies/theHarvester.git /opt/theHarvester && cd /opt/theHarvester && python3 -m pip install -r requirements/base.txt"
+  log_and_exec "Installing recon tools..." "apt install -y nmap masscan recon-ng amass sublist3r dnsenum whois whatweb dirsearch theharvester assetfinder & show_progress"
+  log_and_exec "Installing theHarvester from GitHub..." "git clone https://github.com/laramies/theHarvester.git /opt/theHarvester && cd /opt/theHarvester && python3 -m pip install -r requirements/base.txt & show_progress"
 }
 
 # Function to install enumeration tools
 install_enum_tools() {
-  log_and_exec "Installing enumeration tools..." "apt install -y enum4linux smbclient nbtscan"
+  log_and_exec "Installing enumeration tools..." "apt install -y enum4linux smbclient nbtscan & show_progress"
 }
 
 # Function to install exploitation tools
 install_exploitation_tools() {
-  log_and_exec "Installing exploitation tools..." "apt install -y metasploit-framework sqlmap"
+  log_and_exec "Installing exploitation tools..." "apt install -y metasploit-framework sqlmap & show_progress"
 }
 
 # Function to install post-exploitation tools
 install_post_exploitation_tools() {
-  log_and_exec "Installing post-exploitation tools..." "apt install -y bloodhound mimikatz"
+  log_and_exec "Installing post-exploitation tools..." "apt install -y bloodhound mimikatz & show_progress"
 }
 
 # Function to install defense tools
 install_defense_tools() {
-  log_and_exec "Installing defense tools..." "apt install -y ufw fail2ban"
+  log_and_exec "Installing defense tools..." "apt install -y ufw fail2ban & show_progress"
 }
 
 # Function to install analytics tools
 install_analytics_tools() {
-  log_and_exec "Installing analytics tools..." "wget -O splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz 'https://download.splunk.com/products/splunk/releases/8.2.2/linux/splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz' && tar -xvf splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz -C /opt && /opt/splunk/bin/splunk start --accept-license && /opt/splunk/bin/splunk enable boot-start"
+  log_and_exec "Installing analytics tools..." "wget -O splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz 'https://download.splunk.com/products/splunk/releases/8.2.2/linux/splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz' && tar -xvf splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz -C /opt && /opt/splunk/bin/splunk start --accept-license && /opt/splunk/bin/splunk enable boot-start & show_progress"
 }
 
 # Function to setup UFW
 setup_ufw() {
-  log_and_exec "Installing and configuring UFW..." "apt install ufw -y && ufw default deny incoming && ufw default allow outgoing && ufw allow ssh && ufw allow http && ufw allow https && ufw logging on && ufw enable"
+  log_and_exec "Installing and configuring UFW..." "apt install ufw -y && ufw default deny incoming && ufw default allow outgoing && ufw allow ssh && ufw allow http && ufw allow https && ufw logging on && ufw enable & show_progress"
 }
 
 # Function to setup Fail2Ban
 setup_fail2ban() {
-  log_and_exec "Installing and configuring Fail2Ban..." "apt install fail2ban -y && systemctl enable fail2ban && systemctl start fail2ban"
+  log_and_exec "Installing and configuring Fail2Ban..." "apt install fail2ban -y && systemctl enable fail2ban && systemctl start fail2ban & show_progress"
 }
 
 # Function to setup Splunk
 setup_splunk() {
-  log_and_exec "Installing Splunk..." "wget -O splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz 'https://download.splunk.com/products/splunk/releases/8.2.2/linux/splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz' && tar -xvf splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz -C /opt && /opt/splunk/bin/splunk start --accept-license && /opt/splunk/bin/splunk enable boot-start"
+  log_and_exec "Installing Splunk..." "wget -O splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz 'https://download.splunk.com/products/splunk/releases/8.2.2/linux/splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz' && tar -xvf splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz -C /opt && /opt/splunk/bin/splunk start --accept-license && /opt/splunk/bin/splunk enable boot-start & show_progress"
 }
 
 # Function to perform recon automation
@@ -161,12 +172,18 @@ recon_automation() {
   mkdir -p $OUTPUT_DIR
 
   log_and_exec "Starting recon for $TARGET..." "
-    nmap -sC -sV -oN $OUTPUT_DIR/nmap.txt $TARGET &&
-    masscan -p1-65535 --rate=1000 -oL $OUTPUT_DIR/masscan.txt $TARGET &&
-    amass enum -d $TARGET -o $OUTPUT_DIR/amass.txt &&
-    sublist3r -d $TARGET -o $OUTPUT_DIR/sublist3r.txt &&
-    theHarvester -d $TARGET -b all -f $OUTPUT_DIR/theharvester.txt &&
-    assetfinder --subs-only $TARGET > $OUTPUT_DIR/assetfinder.txt
+    nmap -sC -sV -oN $OUTPUT_DIR/nmap.txt $TARGET &
+    show_progress &&
+    masscan -p1-65535 --rate=1000 -oL $OUTPUT_DIR/masscan.txt $TARGET &
+    show_progress &&
+    amass enum -d $TARGET -o $OUTPUT_DIR/amass.txt &
+    show_progress &&
+    sublist3r -d $TARGET -o $OUTPUT_DIR/sublist3r.txt &
+    show_progress &&
+    theHarvester -d $TARGET -b all -f $OUTPUT_DIR/theharvester.txt &
+    show_progress &&
+    assetfinder --subs-only $TARGET > $OUTPUT_DIR/assetfinder.txt &
+    show_progress
   "
 
   echo "[*] Recon completed for $TARGET. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
@@ -180,9 +197,12 @@ enum_automation() {
   mkdir -p $OUTPUT_DIR
 
   log_and_exec "Starting enumeration for $TARGET..." "
-    nmap -sC -sV -oN $OUTPUT_DIR/nmap.txt $TARGET &&
-    masscan -p1-65535 --rate=1000 -oL $OUTPUT_DIR/masscan.txt $TARGET &&
-    enum4linux $TARGET > $OUTPUT_DIR/enum4linux.txt
+    nmap -sC -sV -oN $OUTPUT_DIR/nmap.txt $TARGET &
+    show_progress &&
+    masscan -p1-65535 --rate=1000 -oL $OUTPUT_DIR/masscan.txt $TARGET &
+    show_progress &&
+    enum4linux $TARGET > $OUTPUT_DIR/enum4linux.txt &
+    show_progress
   "
 
   echo "[*] Enumeration completed for $TARGET. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
@@ -196,8 +216,10 @@ exploitation_automation() {
   mkdir -p $OUTPUT_DIR
 
   log_and_exec "Starting exploitation for $TARGET..." "
-    sqlmap -u 'http://$TARGET' --batch --output-dir=$OUTPUT_DIR &&
-    msfconsole -x 'use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST 0.0.0.0; set LPORT 4444; exploit'
+    sqlmap -u 'http://$TARGET' --batch --output-dir=$OUTPUT_DIR &
+    show_progress &&
+    msfconsole -x 'use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST 0.0.0.0; set LPORT 4444; exploit' &
+    show_progress
   "
 
   echo "[*] Exploitation completed for $TARGET. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
@@ -211,7 +233,8 @@ post_exploitation_lateral_movement() {
   mkdir -p $OUTPUT_DIR
 
   log_and_exec "Starting post-exploitation and lateral movement for $TARGET..." "
-    echo 'Empire and Mimikatz commands here'
+    echo 'Empire and Mimikatz commands here' &
+    show_progress
   "
 
   echo "[*] Post-exploitation and lateral movement completed for $TARGET. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
@@ -229,7 +252,8 @@ advanced_password_cracking() {
   mkdir -p $OUTPUT_DIR
 
   log_and_exec "Starting advanced password cracking..." "
-    hashcat -m [hash_type] -a 0 $HASHFILE $WORDLIST -r $RULESFILE --potfile=$OUTPUT_DIR/hashcat.pot --outfile=$OUTPUT_DIR/hashcat.txt
+    hashcat -m [hash_type] -a 0 $HASHFILE $WORDLIST -r $RULESFILE --potfile=$OUTPUT_DIR/hashcat.pot --outfile=$OUTPUT_DIR/hashcat.txt &
+    show_progress
   "
 
   echo "[*] Advanced password cracking completed. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
@@ -244,7 +268,7 @@ password_cracking() {
   OUTPUT_DIR="$OUTPUT_DIR/password-cracking"
   mkdir -p $OUTPUT_DIR
 
-  log_and_exec "Starting password cracking..." "john --wordlist=$WORDLIST $HASHFILE --pot=$OUTPUT_DIR/john.pot"
+  log_and_exec "Starting password cracking..." "john --wordlist=$WORDLIST $HASHFILE --pot=$OUTPUT_DIR/john.pot & show_progress"
 
   echo "[*] Password cracking completed. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
 }
@@ -257,8 +281,10 @@ web_app_testing() {
   mkdir -p $OUTPUT_DIR
 
   log_and_exec "Starting web application testing for $URL..." "
-    nikto -h $URL -output $OUTPUT_DIR/nikto.txt &&
-    zap-baseline.py -t $URL -r $OUTPUT_DIR/zap.html
+    nikto -h $URL -output $OUTPUT_DIR/nikto.txt &
+    show_progress &&
+    zap-baseline.py -t $URL -r $OUTPUT_DIR/zap.html &
+    show_progress
   "
 
   echo "[*] Web application testing completed for $URL. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
@@ -266,7 +292,7 @@ web_app_testing() {
 
 # Function to setup network analysis tools
 setup_network_analysis_tools() {
-  log_and_exec "Installing network analysis tools..." "apt install -y wireshark tcpdump"
+  log_and_exec "Installing network analysis tools..." "apt install -y wireshark tcpdump & show_progress"
 }
 
 # Function to run vulnerability scanners
@@ -276,8 +302,8 @@ run_vulnerability_scanners() {
   OUTPUT_DIR="$OUTPUT_DIR/vulnerability-scanners"
   mkdir -p $OUTPUT_DIR
 
-  log_and_exec "Running OpenVAS..." "gvm-start && gvm-cli tls --gmp-username admin --gmp-password admin socket --xml '<get_reports/>' > $OUTPUT_DIR/openvas.xml"
-  log_and_exec "Running Nessus..." "/opt/nessus/sbin/nessuscli update --register XXXX-XXXX-XXXX-XXXX --plugins-only && /opt/nessus/sbin/nessusd -D && nessus scan list -f json | jq '.[] | select(.status == 'completed')' > $OUTPUT_DIR/nessus.json"
+  log_and_exec "Running OpenVAS..." "gvm-start && gvm-cli tls --gmp-username admin --gmp-password admin socket --xml '<get_reports/>' > $OUTPUT_DIR/openvas.xml & show_progress"
+  log_and_exec "Running Nessus..." "/opt/nessus/sbin/nessuscli update --register XXXX-XXXX-XXXX-XXXX --plugins-only && /opt/nessus/sbin/nessusd -D && nessus scan list -f json | jq '.[] | select(.status == 'completed')' > $OUTPUT_DIR/nessus.json & show_progress"
 
   echo "[*] Vulnerability scanning completed. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
 }
@@ -296,17 +322,17 @@ deploy_listeners() {
       read LHOST
       echo "[*] Enter the port to listen on (LPORT):"
       read LPORT
-      log_and_exec "Starting Metasploit listener..." "msfconsole -x 'use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST $LHOST; set LPORT $LPORT; exploit'"
+      log_and_exec "Starting Metasploit listener..." "msfconsole -x 'use exploit/multi/handler; set PAYLOAD windows/meterpreter/reverse_tcp; set LHOST $LHOST; set LPORT $LPORT; exploit' & show_progress"
       ;;
     2)
       echo "[*] Enter the port to listen on (LPORT):"
       read LPORT
-      log_and_exec "Starting Netcat listener..." "nc -lvnp $LPORT"
+      log_and_exec "Starting Netcat listener..." "nc -lvnp $LPORT & show_progress"
       ;;
     3)
       echo "[*] Enter the custom listener command:"
       read CUSTOM_LISTENER
-      log_and_exec "Starting custom listener..." "$CUSTOM_LISTENER"
+      log_and_exec "Starting custom listener..." "$CUSTOM_LISTENER & show_progress"
       ;;
     *)
       echo "Invalid choice. Please try again."
@@ -346,7 +372,6 @@ handle_choice() {
 # Main loop
 while true; do
   display_menu
-  read choice
   handle_choice $choice
   echo "Press Enter to continue..."
   read

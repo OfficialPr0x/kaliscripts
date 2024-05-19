@@ -2,8 +2,6 @@
 
 ```markdown
 # Ultimate Ethical Hacking Tool
-
-```plaintext
 ============================================                                  
                        $$$$$$\              
                       $$$ __$$\             
@@ -17,7 +15,7 @@
   $$ |                                      
   \__|                                      
                                             
-      Ultimate Ethical Hacking Tool         
+      The Tool Made by: pr0x :)         
 ============================================
 ```
 

